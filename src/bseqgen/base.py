@@ -1,5 +1,11 @@
 """core representation for binary sequences"""
 from collections.abc import Sequence
+from enum import StrEnum
+
+
+class Direction(StrEnum):
+    LEFT = "left"
+    RIGHT = "right"
 
 
 class BinarySequence:
@@ -28,7 +34,7 @@ class BinarySequence:
     def __str__(self) -> str:
         if self.length <= 64:
             return self.bit_string
-        return f"{self.bit_string[:32]}…{self.bit_string[-32:]}"
+        return f"{self.bit_string[:32]}...{self.bit_string[-32:]}"
 
     def __repr__(self) -> str:
         return (
@@ -90,3 +96,12 @@ class BinarySequence:
         repeats: int = (n + self.length - 1) // self.length
         bits: list[int] = (self.bits * repeats)[:n]
         return BinarySequence(bits)
+
+    def shift(self, n: int, direction: Direction = Direction.LEFT):
+        ...
+
+    def autocorr(self):
+        ...
+
+    def crosscorr(self):
+        ...

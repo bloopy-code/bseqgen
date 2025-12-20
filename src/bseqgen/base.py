@@ -38,7 +38,7 @@ class BinarySequence:
 
     def __repr__(self) -> str:
         return (
-            f"BinarySequence("
+            f"{type(self).__name__}("
             f"length={self.length}, "
             f"preview='{str(self)}'"
             f")"
@@ -98,10 +98,15 @@ class BinarySequence:
         return BinarySequence(bits)
 
     def shift(self, n: int, direction: Direction = Direction.LEFT):
-        ...
+        if Direction.LEFT:
+            return self.bits[n:] + self.bits[:n]
+        elif Direction.RIGHT:
+            return self.bits[-n:] + self.bits[:-n]
+        else:
+            raise ValueError("Incorrect Direction.")
 
     def autocorr(self):
-        ...
+        return None
 
     def crosscorr(self):
-        ...
+        return None

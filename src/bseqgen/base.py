@@ -11,7 +11,7 @@ class Direction(StrEnum):
 class BinarySequence:
     def __init__(self, bits: Sequence[int | str] | str) -> None:
         self.bits: list[int] = self._validate_bits(bits)
-        print(self.bits)  # REMOVE ME!!!! 
+        print(self.bits) 
 
     @staticmethod
     def _validate_bits(input_bits: Sequence[int | str] | str) -> list[int]:

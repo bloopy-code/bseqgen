@@ -11,7 +11,7 @@ class Direction(StrEnum):
 class BinarySequence:
     def __init__(self, bits: Sequence[int | str] | str) -> None:
         self.bits: list[int] = self._validate_bits(bits)
-        print(self.bits)
+        print(self.bits)  # REMOVE ME!!!! 
 
     @staticmethod
     def _validate_bits(input_bits: Sequence[int | str] | str) -> list[int]:
@@ -32,9 +32,7 @@ class BinarySequence:
         return bits_list
 
     def __str__(self) -> str:
-        if self.length <= 64:
-            return self.bit_string
-        return f"{self.bit_string[:32]}...{self.bit_string[-32:]}"
+        return self.bit_string
 
     def __repr__(self) -> str:
         return (
@@ -97,16 +95,15 @@ class BinarySequence:
         bits: list[int] = (self.bits * repeats)[:n]
         return BinarySequence(bits)
 
-    def shift(self, n: int, direction: Direction = Direction.LEFT):
-        if Direction.LEFT:
-            return self.bits[n:] + self.bits[:n]
-        elif Direction.RIGHT:
-            return self.bits[-n:] + self.bits[:-n]
-        else:
-            raise ValueError("Incorrect Direction.")
+    def shift(self, n: int, direction: str = Direction.LEFT):
+        match Direction(direction):
+            case Direction.LEFT:
+                return self.bits[n:] + self.bits[:n]
+            case Direction.RIGHT:
+                return self.bits[-n:] + self.bits[:-n]
 
     def autocorr(self):
-        return None
+        raise NotImplementedError
 
     def crosscorr(self):
-        return None
+        raise NotImplementedError

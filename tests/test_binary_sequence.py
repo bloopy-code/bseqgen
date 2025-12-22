@@ -10,7 +10,7 @@ def test_seq() -> BinarySequence:
 def test_create_sequence_valid() -> None:
     test_sequence = BinarySequence([0, 1, 0])
 
-    assert test_sequence.bits == [0, 1, 0]
+    assert test_sequence.bits == (0, 1, 0)
     assert test_sequence.length == 3
 
 
@@ -27,7 +27,7 @@ def test_create_sequence_empty() -> None:
 def test_create_sequence_string_bin() -> None:
     test_sequence = BinarySequence("1101")
 
-    assert test_sequence.bits == [1, 1, 0, 1]
+    assert test_sequence.bits == (1, 1, 0, 1)
     assert test_sequence.length == 4
 
 
@@ -39,14 +39,14 @@ def test_create_sequence_other_values() -> None:
 def test_create_sequence_tuple() -> None:
     test_sequence = BinarySequence((0, 1, 1))
 
-    assert test_sequence.bits == [0, 1, 1]
+    assert test_sequence.bits == (0, 1, 1)
     assert test_sequence.length == 3
 
 
 def test_create_sequence_strlist() -> None:
     test_sequence = BinarySequence(["1", "0"])
 
-    assert test_sequence.bits == [1, 0]
+    assert test_sequence.bits == (1, 0)
     assert test_sequence.length == 2
 
 
@@ -72,7 +72,7 @@ def test_eq_diff_bits() -> None:
 
 
 def test_eq_other_type(test_seq) -> None:
-    assert test_seq != [1, 1, 0]
+    assert test_seq != (1, 1, 0)
     assert test_seq != "110"
 
 
@@ -108,7 +108,7 @@ def test_hex_string(test_seq) -> None:
 
 
 def test_signed(test_seq) -> None:
-    assert test_seq.signed == [1, 1, -1]
+    assert test_seq.signed == (1, 1, -1)
 
 
 def test_to_length_truncate() -> None:
@@ -122,9 +122,9 @@ def test_to_length_truncate() -> None:
 
 
 def test_shift_left(test_seq) -> None:
-    assert test_seq.shift(1, 'left') == [1, 0, 1]
-    assert test_seq.shift(2) == [0, 1, 1]
+    assert test_seq.shift(1, 'left').bits == (1, 0, 1)
+    assert test_seq.shift(2).bits == (0, 1, 1)
 
 
 def test_shift_right(test_seq) -> None:
-    assert test_seq.shift(1, 'right') == [0, 1, 1]
+    assert test_seq.shift(1, 'right').bits == (0, 1, 1)

@@ -1,2 +1,3 @@
-def hello() -> str:
-    return "Hello from bseqgen!"
+from .random_seq import random_sequence
+
+__all__ = ("random_sequence",)

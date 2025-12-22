@@ -1,6 +1,7 @@
 """core representation for binary sequences"""
 from collections.abc import Sequence
 from enum import StrEnum
+__all__ = ("Direction", "BinarySequence")
 
 
 class Direction(StrEnum):
@@ -10,16 +11,18 @@ class Direction(StrEnum):
 
 class BinarySequence:
     def __init__(self, bits: Sequence[int | str] | str) -> None:
-        self.bits: list[int] = self._validate_bits(bits)
+        self.bits: tuple[int, ...] = self._validate_bits(bits)
 
     @staticmethod
-    def _validate_bits(input_bits: Sequence[int | str] | str) -> list[int]:
+    def _validate_bits(
+        input_bits: Sequence[int | str] | str
+    ) -> tuple[int, ...]:
         """Validate input bit sequences."""
         if (input_bits is None) or (not input_bits):
             raise ValueError("Input bits cannot be None or empty.")
 
         try:
-            bits_list: list[int] = [int(bit) for bit in input_bits]
+            bits_list: tuple[int, ...] = tuple(int(bit) for bit in input_bits)
         except (TypeError, ValueError) as e:
             raise TypeError(
                 "Bits must be an iterable of 0 and 1 values."
@@ -48,6 +51,9 @@ class BinarySequence:
 
     def __len__(self) -> int:
         return self.length
+
+    def __iter__(self):
+        return iter(self.bits)
 
     @property
     def length(self) -> int:
@@ -78,9 +84,9 @@ class BinarySequence:
         return self.as_bytes.hex()
 
     @property
-    def signed(self) -> list[int]:
+    def signed(self) -> tuple[int, ...]:
         """Map bits (0, 1) to (-1, +1)."""
-        return [1 if bit else -1 for bit in self.bits]
+        return tuple(1 if bit else -1 for bit in self.bits)
 
     def to_length(self, n: int) -> "BinarySequence":
         """Repeat or truncate sequence to length n.
@@ -91,18 +97,27 @@ class BinarySequence:
         if n <= 0:
             raise ValueError("Target length must be positive and not zero.")
         repeats: int = (n + self.length - 1) // self.length
-        bits: list[int] = (self.bits * repeats)[:n]
+        bits: tuple[int, ...] = (self.bits * repeats)[:n]
         return BinarySequence(bits)
 
-    def shift(self, n: int, direction: str = Direction.LEFT):
+    def shift(
+            self,
+            n: int,
+            direction: str = Direction.LEFT
+    ) -> "BinarySequence":
         match Direction(direction):
             case Direction.LEFT:
-                return self.bits[n:] + self.bits[:n]
+                return BinarySequence(self.bits[n:] + self.bits[:n])
             case Direction.RIGHT:
-                return self.bits[-n:] + self.bits[:-n]
+                return BinarySequence(self.bits[-n:] + self.bits[:-n])
 
     def autocorr(self):
-        raise NotImplementedError
+        raise NotImplementedError("Auto-correlation coming soon.")
 
     def crosscorr(self):
-        raise NotImplementedError
+        raise NotImplementedError("Cross-correlation coming soon.")
+
+    def conruns(self):
+        raise NotImplementedError("Consequtive runs coming soon!")
+
+    def ones(self) -> int

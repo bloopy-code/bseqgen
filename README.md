@@ -12,8 +12,9 @@ Small Python library for working with Binary Sequences, with a focus on pseudora
 - Input validation from strings, lists, tuples, etc.
 - Shift sequences left/right (circular, supports negative shifts).
 - Sequence repetition and truncation.
-- Byte/hex/string representations
-- Basic sequence metrics (bit counts, balance, basic symbol entropy)
+- Byte/hex/string representations.
+- Basic sequence metrics (bit counts, balance, basic symbol entropy).
+- Use `random_sequence` to generate a random binary sequence.
 
 ---
 

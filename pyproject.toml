@@ -1,6 +1,6 @@
 [project]
 name = "bseqgen"
-version = "0.1.0b1"
+version = "0.1.1"
 description = "Library for generating and working with binary sequences."
 readme = "README.md"
 authors = [

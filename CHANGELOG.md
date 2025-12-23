@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.1.1] - 23/12/2025
+
+### Fixed
+
+- Tests for random_sequence.
+- Documentation updates.
+- Versioning noob errors!
+
 ## [0.1.0b1] - 23/12/2025
 
 ### Added

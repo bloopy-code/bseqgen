@@ -55,6 +55,11 @@ class BinarySequence:
     def __iter__(self):
         return iter(self.bits)
 
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return BinarySequence(self.bits[key])
+        return self.bits[key]
+
     @property
     def length(self) -> int:
         """Number of bits in sequence."""
@@ -88,6 +93,25 @@ class BinarySequence:
         """Map bits (0, 1) to (-1, +1)."""
         return tuple(1 if bit else -1 for bit in self.bits)
 
+    @property
+    def ones(self) -> int:
+        return sum(self.bits)
+
+    @property
+    def zeros(self) -> int:
+        return self.length - self.ones
+
+    @property
+    def balance(self) -> float:
+        return round(self.ones / self.length, 3)
+
+    @property
+    def entropy(self):
+        raise NotImplementedError
+
+    def copy_bits(self) -> "BinarySequence":
+        return BinarySequence(self.bits)
+
     def to_length(self, n: int) -> "BinarySequence":
         """Repeat or truncate sequence to length n.
 
@@ -105,11 +129,25 @@ class BinarySequence:
             n: int,
             direction: str = Direction.LEFT
     ) -> "BinarySequence":
-        match Direction(direction):
+        if self.length == 0:
+            return self
+
+        n = n % self.length
+
+        if n < 0:
+            n = -n
+            direction = (
+                Direction.RIGHT if direction == Direction.LEFT
+                else Direction.LEFT
+            )
+
+        match direction:
             case Direction.LEFT:
                 return BinarySequence(self.bits[n:] + self.bits[:n])
             case Direction.RIGHT:
                 return BinarySequence(self.bits[-n:] + self.bits[:-n])
+
+        raise ValueError(f"{direction} not a valid direction; 'left', 'right'")
 
     def autocorr(self):
         raise NotImplementedError("Auto-correlation coming soon.")
@@ -117,7 +155,20 @@ class BinarySequence:
     def crosscorr(self):
         raise NotImplementedError("Cross-correlation coming soon.")
 
-    def conruns(self):
+    def run_lengths(self):
         raise NotImplementedError("Consequtive runs coming soon!")
 
-    def ones(self) -> int
+    def to_numpy(self):
+        raise NotImplementedError
+
+    def from_numpy(self):
+        raise NotImplementedError
+
+    def invert(self):
+        raise NotImplementedError
+
+    def xor(self):
+        raise NotImplementedError
+
+    def hamming_distance(self):
+        raise NotImplementedError

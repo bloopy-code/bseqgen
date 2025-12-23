@@ -1,6 +1,9 @@
 """core representation for binary sequences"""
+from __future__ import annotations
 from collections.abc import Sequence
 from enum import StrEnum
+import math
+from typing import Iterator
 __all__ = ("Direction", "BinarySequence")
 
 
@@ -52,10 +55,10 @@ class BinarySequence:
     def __len__(self) -> int:
         return self.length
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         return iter(self.bits)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int | slice) -> int | BinarySequence:
         if isinstance(key, slice):
             return BinarySequence(self.bits[key])
         return self.bits[key]
@@ -95,24 +98,45 @@ class BinarySequence:
 
     @property
     def ones(self) -> int:
+        """Return number of 1's in Binary Sequence"""
         return sum(self.bits)
 
     @property
     def zeros(self) -> int:
+        """Return number of 0's in Binary Sequence"""
         return self.length - self.ones
 
     @property
     def balance(self) -> float:
+        """Return % of 1's to 0's in Binary Sequence. (0-1)"""
         return round(self.ones / self.length, 3)
 
     @property
-    def entropy(self):
-        raise NotImplementedError
+    def entropy(self) -> float:
+        """
+        Return Shannon entropy (bits per symbol) for balance of 1's and 0's.
 
-    def copy_bits(self) -> "BinarySequence":
+        Range:
+            0.0 → fully deterministic (all 0s or all 1s)
+            1.0 → maximally random (balanced 0/1)
+        """
+        if self.length == 0:
+            return 0.0
+
+        p1 = self.ones/self.length
+        p0 = 1.0 - p1
+
+        entropy = 0.0
+
+        for p in (p1, p0):
+            if p > 0:
+                entropy -= p * math.log2(p)
+        return round(entropy, 5)
+
+    def copy_bits(self) -> BinarySequence:
         return BinarySequence(self.bits)
 
-    def to_length(self, n: int) -> "BinarySequence":
+    def to_length(self, n: int) -> BinarySequence:
         """Repeat or truncate sequence to length n.
 
         Args:
@@ -127,8 +151,18 @@ class BinarySequence:
     def shift(
             self,
             n: int,
-            direction: str = Direction.LEFT
+            direction: Direction = Direction.LEFT
     ) -> "BinarySequence":
+        """Shift sequence (circular)
+
+        Args:
+            n (int): How many bits to shift by.
+            direction (Direction, optional): 'left' or 'right'.
+                Defaults to Direction.LEFT.
+
+        Returns:
+            BinarySequence: shifted BinarySequence.
+        """
         if self.length == 0:
             return self
 
@@ -156,19 +190,19 @@ class BinarySequence:
         raise NotImplementedError("Cross-correlation coming soon.")
 
     def run_lengths(self):
-        raise NotImplementedError("Consequtive runs coming soon!")
+        raise NotImplementedError("Consecutive runs coming soon!")
 
     def to_numpy(self):
-        raise NotImplementedError
+        raise NotImplementedError("to_numpy coming soon.")
 
     def from_numpy(self):
-        raise NotImplementedError
+        raise NotImplementedError("from_numpy coming soon.")
 
     def invert(self):
-        raise NotImplementedError
+        raise NotImplementedError("invert coming soon.")
 
     def xor(self):
-        raise NotImplementedError
+        raise NotImplementedError("xor coming soon")
 
     def hamming_distance(self):
-        raise NotImplementedError
+        raise NotImplementedError("Hamming distance coming soon")

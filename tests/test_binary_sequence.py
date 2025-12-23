@@ -59,8 +59,7 @@ def test_str_long_seq() -> None:
     seq = BinarySequence(bits)
     seq_str = str(seq)
 
-    assert seq_str.startswith(seq.bit_string[:32])
-    assert seq_str.endswith(seq.bit_string[-32:])
+    assert seq_str == seq.bit_string
 
 
 def test_repr_contains_class_and_len(test_seq) -> None:
@@ -134,11 +133,14 @@ def test_balance(test_seq) -> None:
 
 
 def test_entropy(test_seq) -> None:
-    pass
+    assert test_seq.entropy == 0.9183
 
 
 def test_copy_bits(test_seq) -> None:
-    pass
+    copy_bits = test_seq.copy_bits()
+
+    assert copy_bits.bits == test_seq.bits
+    assert copy_bits is not test_seq
 
 
 def test_to_length_truncate() -> None:

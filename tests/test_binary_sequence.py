@@ -1,4 +1,4 @@
-from bseqgen.base import BinarySequence
+from bseqgen.base import BinarySequence, Direction
 import pytest
 
 
@@ -50,7 +50,7 @@ def test_create_sequence_strlist() -> None:
     assert test_sequence.length == 2
 
 
-def test__str__(test_seq):
+def test__str__(test_seq) -> None:
     assert str(test_seq) == "110"
 
 
@@ -99,6 +99,45 @@ def test__getitem__(test_seq) -> None:
     assert test_seq[1:].bits == (1, 0)
 
 
+def test__invert__(test_seq) -> None:
+    assert (~test_seq).bits == (0, 0, 1)
+
+
+def test__xor__(test_seq):
+    other_seq = BinarySequence("111")
+    assert (test_seq ^ other_seq).bits == (0, 0, 1)
+
+
+def test__and__(test_seq) -> None:
+    other = BinarySequence("101")
+    assert (test_seq & other).bits == (1 & 1, 1 & 0, 0 & 1)  # (1, 0, 0)
+
+
+def test__or__(test_seq) -> None:
+    other = BinarySequence("101")
+    assert (test_seq | other).bits == (1 | 1, 1 | 0, 0 | 1)  # (1, 1, 1)
+
+
+def test__xor__type_error(test_seq) -> None:
+    with pytest.raises(TypeError):
+        test_seq ^ 3  # type: ignore[operator]
+
+
+def test__and__type_error(test_seq) -> None:
+    with pytest.raises(TypeError):
+        test_seq & "110"  # type: ignore[operator]
+
+
+def test__or__type_error(test_seq) -> None:
+    with pytest.raises(TypeError):
+        test_seq | "110"  # type: ignore[operator]
+
+
+def test__xor__length_mismatch(test_seq) -> None:
+    with pytest.raises(ValueError):
+        test_seq ^ BinarySequence("1111")  # type: ignore[operator]
+
+
 def test_bit_string_success(test_seq) -> None:
     assert test_seq.bit_string == "110"
 
@@ -110,6 +149,11 @@ def test_as_bytes_len3(test_seq) -> None:
 def test_as_bytes_len5() -> None:
     s = BinarySequence((1, 1, 1, 0, 0, 0, 1, 0, 1))
     assert s.as_bytes == b'\x01\xc5'
+
+
+def test_as_bytes_exact_8_bits() -> None:
+    s = BinarySequence("11110000")
+    assert s.as_bytes == b"\xF0"
 
 
 def test_hex_string(test_seq) -> None:
@@ -167,11 +211,17 @@ def test_shift_left(test_seq) -> None:
     assert test_seq.shift(1, 'left').bits == (1, 0, 1)
     assert test_seq.shift(2).bits == (0, 1, 1)
     assert test_seq.shift(-1).bits == (0, 1, 1)
+    assert test_seq.shift(1, Direction.LEFT).bits == (1, 0, 1)
 
 
 def test_shift_right(test_seq) -> None:
     assert test_seq.shift(1, 'right').bits == (0, 1, 1)
     assert test_seq.shift(-1, 'right').bits == (1, 0, 1)
+
+
+def test_shift_reject_direction(test_seq) -> None:
+    with pytest.raises(ValueError):
+        test_seq.shift(1, "bloop")  # type: ignore[arg-type]
 
 
 def test_autocorr(test_seq) -> None:
@@ -182,21 +232,83 @@ def test_crosscor(test_seq) -> None:
     pass
 
 
-def test_to_numpy(test_seq) -> None:
-    pass
+def test_to_numpy_default(test_seq) -> None:
+    np = pytest.importorskip("numpy")
+    arr = test_seq.to_numpy()
+    assert arr.ndim == 1
+    assert arr.tolist() == [1, 1, 0]
+    assert arr.dtype == np.uint8
 
 
-def test_from_numpy(test_seq) -> None:
-    pass
+def test_to_numpy_dtype_int8(test_seq) -> None:
+    np = pytest.importorskip("numpy")
+    arr = test_seq.to_numpy(dtype=np.int8)
+    assert arr.dtype == np.int8
+
+
+def test_to_numpy_rejects_non_integer_dtype(test_seq) -> None:
+    np = pytest.importorskip("numpy")
+    with pytest.raises(TypeError):
+        test_seq.to_numpy(dtype=np.float32)  # type: ignore[arg-type]
+
+
+def test_from_numpy_int_array() -> None:
+    np = pytest.importorskip("numpy")
+    arr = np.array([1, 0, 1], dtype=np.uint8)
+    seq = BinarySequence.from_numpy(arr)
+    assert seq.bits == (1, 0, 1)
+
+
+def test_from_numpy_bool_array() -> None:
+    np = pytest.importorskip("numpy")
+    arr = np.array([True, False, True], dtype=np.bool_)
+    seq = BinarySequence.from_numpy(arr)
+    assert seq.bits == (1, 0, 1)
+
+
+def test_from_numpy_rejects_non_1d() -> None:
+    np = pytest.importorskip("numpy")
+    arr = np.array([[1, 0], [0, 1]], dtype=np.uint8)
+    with pytest.raises(ValueError):
+        BinarySequence.from_numpy(arr)  # type: ignore[arg-type]
+
+
+def test_from_numpy_rejects_float_dtype() -> None:
+    np = pytest.importorskip("numpy")
+    arr = np.array([1.0, 0.0], dtype=np.float32)
+    with pytest.raises(TypeError):
+        BinarySequence.from_numpy(arr)  # type: ignore[arg-type]
+
+
+def test_from_numpy_rejects_non_binary_values() -> None:
+    np = pytest.importorskip("numpy")
+    arr = np.array([0, 2, 1], dtype=np.int8)
+    with pytest.raises(ValueError):
+        BinarySequence.from_numpy(arr)
 
 
 def test_invert(test_seq) -> None:
     assert test_seq.inverted().bits == (0, 0, 1)
 
 
-def test_xor(test_seq) -> None:
+def test_xor_success(test_seq) -> None:
     other_seq = BinarySequence("111")
     assert test_seq.xor(other=other_seq).bits == (0, 0, 1)
+
+
+def test_xor_type_error(test_seq) -> None:
+    with pytest.raises(TypeError):
+        test_seq.xor(other="110")  # type: ignore[arg-type]
+
+
+def test_bitwise_and(test_seq) -> None:
+    other = BinarySequence("101")
+    assert test_seq.bitwise_and(other).bits == (1, 0, 0)
+
+
+def test_bitwise_or(test_seq) -> None:
+    other = BinarySequence("101")
+    assert test_seq.bitwise_or(other).bits == (1, 1, 1)
 
 
 def test_hamming_distance(test_seq) -> None:

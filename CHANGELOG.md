@@ -1,11 +1,13 @@
 # Change Log
 
-## [0.1.2] - 03/01/2025
+## [0.1.2] - 03/01/2026
 
 - `run_lengths` implemented to count run lengths in BinarySequence.
 - `inverted`; changed name of method from `invert` to `inverted` and implemented.
 - `xor` implemented.
-- Very basic tests added for above methods/properties.  
+- Dunder methods for `xor`, `and`, `or` added to enable operators (e.g. ~seq, seq & otherseq) etc. Including adding implementations for `and`, `or` bitwise operations.
+- First implementatios of `to_numpy()` and `from_numpy()`, which only import `numpy` if using those particular methods.
+- Very basic tests added for above methods/properties.
 
 ## [0.1.1] - 23/12/2025
 

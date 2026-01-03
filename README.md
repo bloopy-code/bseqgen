@@ -14,6 +14,9 @@ Small Python library for working with Binary Sequences, with a focus on pseudora
 - Sequence repetition and truncation.
 - Byte/hex/string representations.
 - Basic sequence metrics (bit counts, balance, basic symbol entropy).
+- bitwise `xor`, `bitwise_and`, `bitwise_or` (or use operators `^, &, |`).
+- `inverted` to get inverted sequence (or use `~`).
+- `to_numpy()` and `from_numpy()` for NumPy interop.
 - Use `random_sequence` to generate a random binary sequence.
 
 ---
@@ -47,6 +50,24 @@ print(seq.shift(2).bits)
 
 print(seq.ones, seq.zeros)
 # 4 2
+
+print(seq.run_lengths)
+# [(1, 2), (0, 2), (1, 2)]
+
+print(seq & BinarySequence("111000").bits)
+# (1, 1, 0, 0, 0, 0)
+
+print(seq ^ BinarySequence("111000").bits)
+# (0, 0, 1, 0, 1, 1)
+
+print(seq | BinarySequence("111000").bits)
+# (1, 1, 1, 0, 1, 1)
+
+print(~seq.bits)
+# (0, 0, 1, 1, 0, 0)
+
+seq.to_numpy()
+# array([1, 1, 0, 0, 1, 1], dtype=uint8)
 ```
 
 ## Roadmap
@@ -55,8 +76,7 @@ Planned additions include:
 
 - PRBS generators (Gold codes, Walsh-Hadamard, Kasami and more)
 - Autocorrelation and cross-correlation operations.
-- Run length analysis.
-- NumPy interoperability.
+- Property stats and checks, and guess at what types of codes you might have and if it fits the ideal properties.
 
 ## License
 

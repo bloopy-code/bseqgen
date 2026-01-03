@@ -8,6 +8,7 @@
 - Dunder methods for `xor`, `and`, `or` added to enable operators (e.g. ~seq, seq & otherseq) etc. Including adding implementations for `and`, `or` bitwise operations.
 - First implementatios of `to_numpy()` and `from_numpy()`, which only import `numpy` if using those particular methods.
 - Very basic tests added for above methods/properties.
+- Changed `pyproject.toml` to use python `>= 3.11` instead of `3.14`.
 
 ## [0.1.1] - 23/12/2025
 

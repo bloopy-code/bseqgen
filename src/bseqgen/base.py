@@ -6,16 +6,17 @@ import math
 from collections.abc import Iterator, Sequence
 from enum import StrEnum
 from itertools import groupby
-from typing import TYPE_CHECKING, Any, Literal, Self
+from typing import TYPE_CHECKING, Any, Literal, Self, TypeAlias
 
 __all__ = ("Direction", "BinarySequence")
 
 
 if TYPE_CHECKING:
     import numpy as np
+    from numpy.typing import NDArray
 
-    NpNDArrayInt = np.ndarray[Any, np.dtype[np.integer]]
-    NpDTypeInt = np.dtype[np.integer]
+    NpNDArrayInt: TypeAlias = NDArray[np.integer[Any]]
+    NpDTypeInt: TypeAlias = np.dtype[np.integer[Any]]
 
 
 class Direction(StrEnum):

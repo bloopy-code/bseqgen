@@ -18,6 +18,8 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "mypy>=1.19.1",
+    "numpy>=2.4.0",
+    "numpy-typing-compat>=20251206.2.4",
     "pre-commit>=4.5.1",
     "pydocstyle>=6.3.0",
     "pytest>=9.0.2",

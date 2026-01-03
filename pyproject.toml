@@ -18,7 +18,26 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "mypy>=1.19.1",
+    "pre-commit>=4.5.1",
     "pydocstyle>=6.3.0",
     "pytest>=9.0.2",
     "ruff>=0.14.9",
 ]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+warn_unused_configs = true
+warn_return_any = true
+no_implicit_optional = true
+strict_equality = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+pretty = true
+show_error_codes = true
+mypy_path = "src"
+

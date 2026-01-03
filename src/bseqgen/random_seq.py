@@ -1,7 +1,10 @@
 """Generate PRBS with Random Modules"""
-from .base import BinarySequence
+
 import random
 from typing import TypeAlias
+
+from .base import BinarySequence
+
 __all__ = ("random_sequence",)
 
 Seed: TypeAlias = None | int | float | str | bytes | bytearray

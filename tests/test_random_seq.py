@@ -1,6 +1,7 @@
+import pytest
+
 from bseqgen import random_sequence
 from bseqgen.base import BinarySequence
-import pytest
 
 
 @pytest.fixture
@@ -8,15 +9,15 @@ def test_seq() -> BinarySequence:
     return random_sequence(n=10)
 
 
-def test_random_sequence_returns_binarysequence(test_seq) -> None:
+def test_random_sequence_returns_binarysequence(test_seq: BinarySequence) -> None:
     assert isinstance(test_seq, BinarySequence)
 
 
-def test_random_sequence_length(test_seq) -> None:
+def test_random_sequence_length(test_seq: BinarySequence) -> None:
     assert test_seq.length == 10
 
 
-def test_random_sequence_bits_binary(test_seq) -> None:
+def test_random_sequence_bits_binary(test_seq: BinarySequence) -> None:
     assert all(bit in (0, 1) for bit in test_seq)
 
 

@@ -1,10 +1,13 @@
 """core representation for binary sequences"""
+
 from __future__ import annotations
-from collections.abc import Sequence
+
+import math
+from collections.abc import Iterator, Sequence
 from enum import StrEnum
 from itertools import groupby
-import math
-from typing import Iterator, TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Literal, Self
+
 __all__ = ("Direction", "BinarySequence")
 
 
@@ -25,9 +28,7 @@ class BinarySequence:
         self.bits: tuple[int, ...] = self._validate_bits(bits)
 
     @staticmethod
-    def _validate_bits(
-        input_bits: Sequence[int | str] | str
-    ) -> tuple[int, ...]:
+    def _validate_bits(input_bits: Sequence[int | str] | str) -> tuple[int, ...]:
         """Validate input bit sequences."""
         if (input_bits is None) or (not input_bits):
             raise ValueError("Input bits cannot be None or empty.")
@@ -35,9 +36,7 @@ class BinarySequence:
         try:
             bits_list: tuple[int, ...] = tuple(int(bit) for bit in input_bits)
         except (TypeError, ValueError) as e:
-            raise TypeError(
-                "Bits must be an iterable of 0 and 1 values."
-            ) from e
+            raise TypeError("Bits must be an iterable of 0 and 1 values.") from e
 
         if any(bit not in (0, 1) for bit in bits_list):
             raise ValueError("Bit sequence must only contain 0 or 1.")
@@ -64,12 +63,7 @@ class BinarySequence:
         return self.bit_string
 
     def __repr__(self) -> str:
-        return (
-            f"{type(self).__name__}("
-            f"length={self.length}, "
-            f"preview='{str(self)}'"
-            f")"
-        )
+        return f"{type(self).__name__}(length={self.length}, preview='{str(self)}')"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BinarySequence):
@@ -135,7 +129,7 @@ class BinarySequence:
         zero_padding_len: int = (-len(bit_str)) % 8
         bit_str_padded: str = ("0" * zero_padding_len) + bit_str
         byte_conversion: bytes = int(bit_str_padded, 2).to_bytes(
-            len(bit_str_padded)//8, "big"
+            len(bit_str_padded) // 8, "big"
         )
 
         return byte_conversion
@@ -177,7 +171,7 @@ class BinarySequence:
         if self.length == 0:
             return 0.0
 
-        p1 = self.ones/self.length
+        p1 = self.ones / self.length
         p0 = 1.0 - p1
 
         entropy = 0.0
@@ -188,7 +182,7 @@ class BinarySequence:
         return round(entropy, 5)
 
     @property
-    def run_lengths(self):
+    def run_lengths(self) -> list[tuple[int, int]]:
         """Return list of run lengths [(digit, run count)].
 
         E.g. 111001 >> [(1, 3), (0, 2), (1, 1)]
@@ -212,15 +206,15 @@ class BinarySequence:
         return BinarySequence(bits)
 
     def shift(
-            self,
-            n: int,
-            direction: Direction = Direction.LEFT
-    ) -> "BinarySequence":
-        """Shift sequence (circular)
+        self,
+        n: int,
+        direction: Direction | Literal["left", "right"] = Direction.LEFT,
+    ) -> BinarySequence:
+        """Shift sequence (circular).
 
         Args:
             n (int): How many bits to shift by.
-            direction (Direction, optional): 'left' or 'right'.
+            direction (Direction|Literal['left', 'right'], optional): 'left' or 'right'.
                 Defaults to Direction.LEFT.
 
         Returns:
@@ -236,8 +230,7 @@ class BinarySequence:
         if n < 0:
             n = -n
             direction = (
-                Direction.RIGHT if direction == Direction.LEFT
-                else Direction.LEFT
+                Direction.RIGHT if direction == Direction.LEFT else Direction.LEFT
             )
 
         match direction:
@@ -248,13 +241,13 @@ class BinarySequence:
 
         raise ValueError(f"{direction} not a valid direction; 'left', 'right'")
 
-    def autocorr(self):
+    def autocorr(self) -> Any:
         raise NotImplementedError("Auto-correlation coming soon.")
 
-    def crosscorr(self):
+    def crosscorr(self) -> Any:
         raise NotImplementedError("Cross-correlation coming soon.")
 
-    def to_numpy(self, dtype: "NpDTypeInt | None" = None) -> "NpNDArrayInt":
+    def to_numpy(self, dtype: NpDTypeInt | None = None) -> NpNDArrayInt:
         """Convert BinarySequence to 1D NumPy array.
 
         NumPy is an optional dependency, only required when calling the to_numpy
@@ -280,7 +273,7 @@ class BinarySequence:
         return np.array(self.bits, dtype=out_dtype)
 
     @classmethod
-    def from_numpy(cls, np_array: "NpNDArrayInt") -> Self:
+    def from_numpy(cls, np_array: NpNDArrayInt) -> Self:
         """Convert 1D NumPy array to BinarySequence.
 
         Args:
@@ -329,7 +322,7 @@ class BinarySequence:
         """
         other_sequence = self._compatible_bits(other, "xor")
         return BinarySequence(
-            tuple(a ^ b for a, b in zip(self.bits, other_sequence))
+            tuple(a ^ b for a, b in zip(self.bits, other_sequence, strict=True))
         )
 
     def bitwise_and(self, other: BinarySequence) -> BinarySequence:
@@ -343,7 +336,7 @@ class BinarySequence:
         """
         other_sequence = self._compatible_bits(other, "and")
         return BinarySequence(
-            tuple(a & b for a, b in zip(self.bits, other_sequence))
+            tuple(a & b for a, b in zip(self.bits, other_sequence, strict=True))
         )
 
     def bitwise_or(self, other: BinarySequence) -> BinarySequence:
@@ -357,8 +350,8 @@ class BinarySequence:
         """
         other_sequence = self._compatible_bits(other, "or")
         return BinarySequence(
-            tuple(a | b for a, b in zip(self.bits, other_sequence))
+            tuple(a | b for a, b in zip(self.bits, other_sequence, strict=True))
         )
 
-    def hamming_distance(self):
+    def hamming_distance(self) -> Any:
         raise NotImplementedError("Hamming distance coming soon")

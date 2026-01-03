@@ -2,6 +2,7 @@
 from __future__ import annotations
 from collections.abc import Sequence
 from enum import StrEnum
+from itertools import groupby
 import math
 from typing import Iterator
 __all__ = ("Direction", "BinarySequence")
@@ -133,7 +134,16 @@ class BinarySequence:
                 entropy -= p * math.log2(p)
         return round(entropy, 5)
 
+    @property
+    def run_lengths(self):
+        """Return list of run lengths [(digit, run count)].
+
+        E.g. 111001 >> [(1, 3), (0, 2), (1, 1)]
+        """
+        return [(bit, sum(1 for _ in group)) for bit, group in groupby(self.bits)]
+
     def copy_bits(self) -> BinarySequence:
+        """Return a copy of the BinarySequence."""
         return BinarySequence(self.bits)
 
     def to_length(self, n: int) -> BinarySequence:
@@ -189,20 +199,31 @@ class BinarySequence:
     def crosscorr(self):
         raise NotImplementedError("Cross-correlation coming soon.")
 
-    def run_lengths(self):
-        raise NotImplementedError("Consecutive runs coming soon!")
-
     def to_numpy(self):
         raise NotImplementedError("to_numpy coming soon.")
 
     def from_numpy(self):
         raise NotImplementedError("from_numpy coming soon.")
 
-    def invert(self):
-        raise NotImplementedError("invert coming soon.")
+    def inverted(self) -> BinarySequence:
+        """Return inverted BinarySequence.
 
-    def xor(self):
-        raise NotImplementedError("xor coming soon")
+        E.g. 0 -> 1, 1 -> 0.
+        """
+        return BinarySequence(tuple(1 - bit for bit in self.bits))
+
+    def xor(self, other: BinarySequence) -> BinarySequence:
+        """XOR current BinarySequence with another of the same length.
+
+        Args:
+            other (BinarySequence): Binary Sequence.
+
+        Returns:
+            BinarySequence: XOR result.
+        """
+        if self.length != other.length:
+            raise ValueError("Sequences must be same length.")
+        return BinarySequence(tuple(a ^ b for a, b in zip(self.bits, other.bits)))
 
     def hamming_distance(self):
         raise NotImplementedError("Hamming distance coming soon")

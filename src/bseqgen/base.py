@@ -4,8 +4,15 @@ from collections.abc import Sequence
 from enum import StrEnum
 from itertools import groupby
 import math
-from typing import Iterator
+from typing import Iterator, TYPE_CHECKING, Any, Self
 __all__ = ("Direction", "BinarySequence")
+
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    NpNDArrayInt = np.ndarray[Any, np.dtype[np.integer]]
+    NpDTypeInt = np.dtype[np.integer]
 
 
 class Direction(StrEnum):
@@ -37,6 +44,22 @@ class BinarySequence:
 
         return bits_list
 
+    def _compatible_bits(self, other: object, op: str) -> tuple[int, ...]:
+        """Validate that other is a BinarySequence of the same length.
+
+        Args:
+            other (object): Object to validate
+            op (str): Operation name used for error messages.
+
+        Returns:
+            tuple[int, ...]: Other sequences bits as tuple of ints.
+        """
+        if not isinstance(other, BinarySequence):
+            raise TypeError(f"{op} requires a BinarySequence.")
+        if self.length != other.length:
+            raise ValueError(f"{op} requires both sequences to be the same length.")
+        return other.bits
+
     def __str__(self) -> str:
         return self.bit_string
 
@@ -63,6 +86,36 @@ class BinarySequence:
         if isinstance(key, slice):
             return BinarySequence(self.bits[key])
         return self.bits[key]
+
+    def __invert__(self) -> BinarySequence:
+        """Return bitwise inversion of this BinarySequence (~seq).
+        Equivalent to: seq.inverted()
+        """
+        return self.inverted()
+
+    def __xor__(self, other: object) -> BinarySequence:
+        """Bitwise XOR with another BinarySequence (seq ^ other).
+        Equivalent to: seq.xor(other).
+        """
+        if not isinstance(other, BinarySequence):
+            return NotImplemented
+        return self.xor(other)
+
+    def __and__(self, other: object) -> BinarySequence:
+        """Bitwise AND with another BinarySequence (seq & other).
+        Equivalent to: seq.bitwise_and(other).
+        """
+        if not isinstance(other, BinarySequence):
+            return NotImplemented
+        return self.bitwise_and(other)
+
+    def __or__(self, other: object) -> BinarySequence:
+        """Bitwise OR with another BinarySequence (seq | other).
+        Equivalent to: seq.bitwise_or(other).
+        """
+        if not isinstance(other, BinarySequence):
+            return NotImplemented
+        return self.bitwise_or(other)
 
     @property
     def length(self) -> int:
@@ -178,6 +231,8 @@ class BinarySequence:
 
         n = n % self.length
 
+        direction = Direction(direction)
+
         if n < 0:
             n = -n
             direction = (
@@ -199,11 +254,62 @@ class BinarySequence:
     def crosscorr(self):
         raise NotImplementedError("Cross-correlation coming soon.")
 
-    def to_numpy(self):
-        raise NotImplementedError("to_numpy coming soon.")
+    def to_numpy(self, dtype: "NpDTypeInt | None" = None) -> "NpNDArrayInt":
+        """Convert BinarySequence to 1D NumPy array.
 
-    def from_numpy(self):
-        raise NotImplementedError("from_numpy coming soon.")
+        NumPy is an optional dependency, only required when calling the to_numpy
+        and from_numpy methods.
+
+        Args:
+            dtype (NpDTypeInt | None, optional): Optional NumPy integer dtype to use.
+                Defaults to None (which then uses np.uint8)
+
+        Returns:
+            NpNDArrayInt: 1D NumPy array of 0 and 1 values.
+        """
+        try:
+            import numpy as np
+        except ImportError as e:
+            raise ImportError("NumPy is required for to_numpy().") from e
+
+        out_dtype = dtype or np.uint8
+        if not np.issubdtype(out_dtype, np.integer):
+            raise TypeError(
+                "dtype must be an integer NumPy dtype (e.g., np.uint8, np.int8)."
+            )
+        return np.array(self.bits, dtype=out_dtype)
+
+    @classmethod
+    def from_numpy(cls, np_array: "NpNDArrayInt") -> Self:
+        """Convert 1D NumPy array to BinarySequence.
+
+        Args:
+            np_array (NpNDArrayInt): 1D NumPy Array of integers.
+
+        Returns:
+            BinarySequence: Binary Sequence
+        """
+        # try and import numpy
+        try:
+            import numpy as np
+        except ImportError as e:
+            raise ImportError("NumPy is required for from_numpy().") from e
+
+        # make sure input np_array is an np.ndarray
+        if not isinstance(np_array, np.ndarray):
+            raise TypeError("Input must be a NumPy array.")
+
+        # correct dimensions
+        if np_array.ndim != 1:
+            raise ValueError("NumPy array must be 1D.")
+
+        # integer or bool dtype
+        if not np.issubdtype(np_array.dtype, np.integer) and np_array.dtype != np.bool_:
+            raise TypeError("Array dtype must be integer or boolean.")
+
+        bits = tuple(int(bit) for bit in np_array.tolist())
+
+        return cls(bits)
 
     def inverted(self) -> BinarySequence:
         """Return inverted BinarySequence.
@@ -221,9 +327,38 @@ class BinarySequence:
         Returns:
             BinarySequence: XOR result.
         """
-        if self.length != other.length:
-            raise ValueError("Sequences must be same length.")
-        return BinarySequence(tuple(a ^ b for a, b in zip(self.bits, other.bits)))
+        other_sequence = self._compatible_bits(other, "xor")
+        return BinarySequence(
+            tuple(a ^ b for a, b in zip(self.bits, other_sequence))
+        )
+
+    def bitwise_and(self, other: BinarySequence) -> BinarySequence:
+        """Bitwise AND with another BinarySequence of the same length.
+
+        Args:
+            other (BinarySequence): Binary Sequence.
+
+        Returns:
+            BinarySequence: AND result.
+        """
+        other_sequence = self._compatible_bits(other, "and")
+        return BinarySequence(
+            tuple(a & b for a, b in zip(self.bits, other_sequence))
+        )
+
+    def bitwise_or(self, other: BinarySequence) -> BinarySequence:
+        """Bitwise OR with another BinarySequence of the same length.
+
+        Args:
+            other (BinarySequence): Binary Sequence.
+
+        Returns:
+            BinarySequence: OR result.
+        """
+        other_sequence = self._compatible_bits(other, "or")
+        return BinarySequence(
+            tuple(a | b for a, b in zip(self.bits, other_sequence))
+        )
 
     def hamming_distance(self):
         raise NotImplementedError("Hamming distance coming soon")

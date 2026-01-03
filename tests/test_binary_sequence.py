@@ -136,6 +136,16 @@ def test_entropy(test_seq) -> None:
     assert test_seq.entropy == 0.9183
 
 
+def test_run_lengths() -> None:
+    seq = BinarySequence("11110001110010101100")
+    assert seq.run_lengths == [
+        (1, 4), (0, 3), (1, 3),
+        (0, 2), (1, 1), (0, 1),
+        (1, 1), (0, 1), (1, 2),
+        (0, 2)
+    ]
+
+
 def test_copy_bits(test_seq) -> None:
     copy_bits = test_seq.copy_bits()
 
@@ -172,10 +182,6 @@ def test_crosscor(test_seq) -> None:
     pass
 
 
-def test_run_lengths(test_seq) -> None:
-    pass
-
-
 def test_to_numpy(test_seq) -> None:
     pass
 
@@ -185,11 +191,12 @@ def test_from_numpy(test_seq) -> None:
 
 
 def test_invert(test_seq) -> None:
-    pass
+    assert test_seq.inverted().bits == (0, 0, 1)
 
 
 def test_xor(test_seq) -> None:
-    pass
+    other_seq = BinarySequence("111")
+    assert test_seq.xor(other=other_seq).bits == (0, 0, 1)
 
 
 def test_hamming_distance(test_seq) -> None:

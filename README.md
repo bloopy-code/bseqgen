@@ -1,6 +1,6 @@
 # bseqgen
 
-Current Version: 0.1.3
+Current Version: 0.1.4
 
 Small Python library for working with Binary Sequences, with a focus on pseudorandom binary sequences and signal-processing style operations.
 

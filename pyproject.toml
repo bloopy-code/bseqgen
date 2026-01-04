@@ -15,6 +15,13 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project.urls]
+Homepage = "https://github.com/bloopy-code/bseqgen"
+Repository = "https://github.com/bloopy-code/bseqgen.git"
+Issues = "https://github.com/bloopy-code/bseqgen/issues"
+Changelog = "https://github.com/bloopy-code/bseqgen/blob/main/CHANGELOG.md"
+
+
 [dependency-groups]
 dev = [
     "mypy>=1.19.1",

@@ -82,4 +82,9 @@ Planned additions include:
 
 ## License
 
-MIT.
+MIT
+
+## Support
+
+Found a bug or want a feature? Please open an issue on GitHub:  
+<https://github.com/bloopy-code/bseqgen/issues>

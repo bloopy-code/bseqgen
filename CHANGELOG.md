@@ -1,6 +1,6 @@
 # Change Log
 
-## 03/01/2026 (No version yet)
+## [0.1.4] - 03/01/2026
 
 - Minor changes to reflect a stricter mypy and ruff checking.
 - Added Github Actions CI (ruff, pylint, mypy, pytest).

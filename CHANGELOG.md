@@ -1,5 +1,11 @@
 # Change Log
 
+## 03/01/2026 (No version yet)
+
+- Minor changes to reflect a stricter mypy and ruff checking.
+- Added Github Actions CI (ruff, pylint, mypy, pytest).
+- Added project urls and issue link to pyproject.toml and README.md
+
 ## [0.1.3] - 03/01/2026
 
 - Changed `pyproject.toml` to use python `>= 3.11` instead of `3.14`.

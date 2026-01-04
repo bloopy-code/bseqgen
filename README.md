@@ -6,6 +6,10 @@ Small Python library for working with Binary Sequences, with a focus on pseudora
 
 > **Status:** Beta (API may evolve and change significantly before v1.0)
 
+![PyPI](https://img.shields.io/pypi/v/bseqgen)
+
+[![CI](https://github.com/bloopy-code/bseqgen/actions/workflows/main.yml/badge.svg)](https://github.com/bloopy-code/bseqgen/actions/workflows/main.yml)
+
 ---
 
 ## Features

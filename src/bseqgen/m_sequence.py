@@ -8,7 +8,7 @@ __all__ = ("MSequence",)
 
 class MSequence:
     def __init__(self, polynomial: str, initial_fill: str) -> None:
-        self.polynomial = polynomial
+        self.polynomial = polynomial.replace(" ", "")
         self.degrees = _validate_polynomial(polynomial)
         self.m = self.degrees[0]
         self.tap_degrees = self.degrees[1:-1]
@@ -51,10 +51,10 @@ class MSequence:
         out = tuple(self.step() for _ in range(self.max_sequence_length))
         return BinarySequence(out)
 
-    def generate_k_bits(self, n: int, reset_on_finish: bool = True) -> BinarySequence:
-        if n <= 0:
+    def generate_k_bits(self, k: int, reset_on_finish: bool = True) -> BinarySequence:
+        if k <= 0:
             raise ValueError("length (k) must be positive.")
-        out = tuple(self.step() for _ in range(n))
+        out = tuple(self.step() for _ in range(k))
 
         if reset_on_finish:
             self.reset()

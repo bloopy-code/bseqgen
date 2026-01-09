@@ -15,6 +15,10 @@ def _validate_polynomial(polynomial: str) -> list[int]:
     degree_pattern = r"x(?:\^(\d+))?"
 
     degrees = [1 if d == "" else int(d) for d in re.findall(degree_pattern, polynomial)]
+
+    if any(d == 0 for d in degrees):
+        raise ValueError("Use '+1' for the constant term; do not write x^0.")
+
     degrees.append(0)
 
     if len(set(degrees)) != len(degrees):
@@ -22,8 +26,8 @@ def _validate_polynomial(polynomial: str) -> list[int]:
 
     if degrees != sorted(degrees, reverse=True):
         raise ValueError(
-            "Polynomial terms must be in descending degree order.",
-            f"Got degrees {degrees}.",
+            "Polynomial terms must be in descending degree order."
+            f"Got degrees {degrees}."
         )
 
     m = degrees[0]
@@ -53,3 +57,28 @@ def _check_initial_fill(m: int, initial_fill: str) -> str:
         )
 
     return initial_fill
+
+
+def _correlate(x: tuple[int, ...], y: tuple[int, ...]) -> int:
+    """Bipolar correlation between two binary sequences.
+
+    Bits are mapped as: 1 -> +1, 0 -> -1.
+    Correlation is the sum of products.
+
+    Args:
+        x (tuple[int, ...]): _description_
+        y (tuple[int, ...]): _description_
+
+    Examples:
+        >>> _correlate((1, 0, 1), (1, 0, 1))
+        3
+        >>> _correlate((1, 0, 1), (0, 1, 0))
+        -3
+
+    Returns:
+        int: sum([+1 for same bits else -1])
+    """
+    if len(x) != len(y):
+        raise ValueError("Lengths of sequences must be the same.")
+
+    return sum([+1 if xt == yt else -1 for xt, yt in zip(x, y, strict=True)])

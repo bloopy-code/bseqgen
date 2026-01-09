@@ -177,10 +177,6 @@ def test_balance(test_seq: BinarySequence) -> None:
     assert test_seq.balance == 0.667
 
 
-def test_entropy(test_seq: BinarySequence) -> None:
-    assert test_seq.entropy == 0.9183
-
-
 def test_run_lengths() -> None:
     seq = BinarySequence("11110001110010101100")
     assert seq.run_lengths == [

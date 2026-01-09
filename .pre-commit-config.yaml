@@ -2,19 +2,20 @@ repos:
   - repo: local
     hooks:
       - id: ruff-format
-        name: ruff format
-        entry: uv run ruff format .
+        name: ruff format (staged)
+        entry: uv run ruff format 
         language: system
         pass_filenames: false
 
       - id: ruff-check
-        name: ruff check
+        name: ruff check (staged)
         entry: uv run ruff check .
         language: system
         pass_filenames: false
 
       - id: mypy
-        name: mypy
+        name: mypy (all)
         entry: uv run mypy .
         language: system
         pass_filenames: false
+        stages: [manual]

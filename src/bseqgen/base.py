@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Iterator, Sequence
 from enum import StrEnum
 from itertools import groupby
 from typing import TYPE_CHECKING, Any, Literal, Self, TypeAlias
+
+from .utils import _correlate
 
 __all__ = ("Direction", "BinarySequence")
 
@@ -161,28 +162,6 @@ class BinarySequence:
         return round(self.ones / self.length, 3)
 
     @property
-    def entropy(self) -> float:
-        """
-        Return Shannon entropy (bits per symbol) for balance of 1's and 0's.
-
-        Range:
-            0.0 → fully deterministic (all 0s or all 1s)
-            1.0 → maximally random (balanced 0/1)
-        """
-        if self.length == 0:
-            return 0.0
-
-        p1 = self.ones / self.length
-        p0 = 1.0 - p1
-
-        entropy = 0.0
-
-        for p in (p1, p0):
-            if p > 0:
-                entropy -= p * math.log2(p)
-        return round(entropy, 5)
-
-    @property
     def run_lengths(self) -> list[tuple[int, int]]:
         """Return list of run lengths [(digit, run count)].
 
@@ -242,11 +221,43 @@ class BinarySequence:
 
         raise ValueError(f"{direction} not a valid direction; 'left', 'right'")
 
-    def autocorr(self) -> Any:
-        raise NotImplementedError("Auto-correlation coming soon.")
+    def autocorr(self) -> list[int]:
+        """Periodic autocorrelation over all circular (left direction) shifts.
 
-    def crosscorr(self) -> Any:
-        raise NotImplementedError("Cross-correlation coming soon.")
+        Uses bipolar scoring: match -> +1, mismatch -> -1, summed over the sequence.
+
+        Examples:
+            >>> a = BinarySequence("0010111")
+            >>> a.autocorr()
+            [7, -1, -1, -1, -1, -1]
+
+        Returns:
+            list[int]: List of autocorrelation values.
+        """
+        return [_correlate(self.bits, self.shift(t).bits) for t in range(self.length)]
+
+    def crosscorr(self, other: BinarySequence) -> list[int]:
+        """Periodic cross-correlation against another sequence.
+
+        The other sequence is circularly shifted LEFT by t for each lag t.
+        This corresponds to the DSP definition R_xy[t] = sum(x[n] y[n+t]).
+
+        Args:
+            other (BinarySequence): Different BinarySequence.
+
+        Examples:
+            >>> x = BinarySequence("101")
+            >>> y = BinarySequence("110")
+            >>> x.crosscorr(y)
+            [1, -3, 1]
+
+        Returns:
+            list[int]: List of cross-correlation values.
+        """
+        if not isinstance(other, BinarySequence):
+            raise TypeError("crosscorr requires a BinarySequence.")
+
+        return [_correlate(self.bits, other.shift(t).bits) for t in range(self.length)]
 
     def to_numpy(self, dtype: NpDTypeInt | None = None) -> NpNDArrayInt:
         """Convert BinarySequence to 1D NumPy array.

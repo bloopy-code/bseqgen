@@ -227,12 +227,18 @@ def test_shift_reject_direction(test_seq: BinarySequence) -> None:
         test_seq.shift(1, "bloop")  # type: ignore[arg-type]
 
 
-def test_autocorr(test_seq: BinarySequence) -> None:
-    pass
+@pytest.mark.parametrize(
+    "seq_bits, autocorr",
+    [("0010111", [7, -1, -1, -1, -1, -1, -1]), ("1110001", [7, 3, -1, -5, -5, -1, 3])],
+)
+def test_autocorr(seq_bits: str, autocorr: list[int]) -> None:
+    seq = BinarySequence(seq_bits)
+    print(seq.autocorr())
+    assert seq.autocorr() == autocorr
 
 
 def test_crosscor(test_seq: BinarySequence) -> None:
-    pass
+    assert test_seq.crosscorr(BinarySequence("010")) == [1, 1, -3]
 
 
 def test_to_numpy_default(test_seq: BinarySequence) -> None:

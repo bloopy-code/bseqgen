@@ -24,6 +24,7 @@ Small Python library for working with Binary Sequences, with a focus on pseudora
 - `inverted` to get inverted sequence (or use `~`).
 - `to_numpy()` and `from_numpy()` for NumPy interop.
 - Use `random_sequence` to generate a random binary sequence.
+- `autocorr` and `crosscorr` to get correlation values between other (or same) shifted Binary Sequences.
 
 ---
 
@@ -80,9 +81,11 @@ seq.to_numpy()
 
 Planned additions include:
 
+- CURRENT: Max Length Sequences (m-sequence). First version release approx ~ 18th January 2026.
 - PRBS generators (Gold codes, Walsh-Hadamard, Kasami and more)
 - Autocorrelation and cross-correlation operations.
 - Property stats and checks, and guess at what types of codes you might have and if it fits the ideal properties.
+- Docstrings, documentation and formatting surge - a mid-point check to refactor, rethink and clarify code.
 
 ## License
 
@@ -92,3 +95,5 @@ MIT
 
 Found a bug or want a feature? Please open an issue on GitHub:  
 <https://github.com/bloopy-code/bseqgen/issues>
+
+Always happy to accept contributions, collaboration, or if someone wants to check my maths!

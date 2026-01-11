@@ -229,7 +229,7 @@ class BinarySequence:
         Examples:
             >>> a = BinarySequence("0010111")
             >>> a.autocorr()
-            [7, -1, -1, -1, -1, -1]
+            [7, -1, -1, -1, -1, -1, -1]
 
         Returns:
             list[int]: List of autocorrelation values.

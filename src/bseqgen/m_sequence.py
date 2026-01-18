@@ -11,7 +11,7 @@ from .utils import (
     berlekamp_massey,
     calculate_canonical_frobenius,
     coeffs_to_poly_str,
-    find_fill,
+    recover_fill,
 )
 
 __all__ = ("MSequence",)
@@ -173,13 +173,13 @@ class MSequence(BinarySequence):
 
         C = berlekamp_massey(dec_bits)
         new_poly = coeffs_to_poly_str(C)
-        new_fill = find_fill(new_poly, dec_bits)
+        new_fill = recover_fill(new_poly, dec_bits)
 
         return MSequence(new_poly, new_fill)
 
     def canonical(self) -> MSequence:
         _canon_shift, _cosets, canon_seq = calculate_canonical_frobenius(self.bits)
-        canon_fill = find_fill(self.polynomial, canon_seq)
+        canon_fill = recover_fill(self.polynomial, canon_seq)
 
         return MSequence(self.polynomial, canon_fill)
 

@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import pytest
 
 from bseqgen.base import BinarySequence, Direction
@@ -8,10 +10,23 @@ def test_seq() -> BinarySequence:
     return BinarySequence((1, 1, 0))
 
 
-def test_create_sequence_valid() -> None:
-    test_sequence = BinarySequence([0, 1, 0])
+@pytest.mark.parametrize(
+    "input_sequence",
+    [
+        [1, 0, 1],
+        (1, 0, 1),
+        "101",
+        101,
+        ["1", "0", "1"],
+        ("1", "0", "1"),
+        [1, "0", 1],
+        "0b101",
+    ],
+)
+def test_create_valid_sequence(input_sequence: int | Sequence[int | str]) -> None:
+    test_sequence = BinarySequence(input_sequence)  # type: ignore
 
-    assert test_sequence.bits == (0, 1, 0)
+    assert test_sequence.bits == (1, 0, 1)
     assert test_sequence.length == 3
 
 
@@ -25,37 +40,16 @@ def test_create_sequence_empty() -> None:
         BinarySequence([])
 
 
-def test_create_sequence_string_bin() -> None:
-    test_sequence = BinarySequence("1101")
-
-    assert test_sequence.bits == (1, 1, 0, 1)
-    assert test_sequence.length == 4
-
-
 def test_create_sequence_other_values() -> None:
     with pytest.raises(ValueError):
         BinarySequence([3, 8])
-
-
-def test_create_sequence_tuple() -> None:
-    test_sequence = BinarySequence((0, 1, 1))
-
-    assert test_sequence.bits == (0, 1, 1)
-    assert test_sequence.length == 3
-
-
-def test_create_sequence_strlist() -> None:
-    test_sequence = BinarySequence(["1", "0"])
-
-    assert test_sequence.bits == (1, 0)
-    assert test_sequence.length == 2
 
 
 def test__str__(test_seq: BinarySequence) -> None:
     assert str(test_seq) == "110"
 
 
-def test_str_long_seq() -> None:
+def test_str_seq() -> None:
     bits = [1, 0] * 100
     seq = BinarySequence(bits)
     seq_str = str(seq)
@@ -119,19 +113,19 @@ def test__or__(test_seq: BinarySequence) -> None:
     assert (test_seq | other).bits == (1 | 1, 1 | 0, 0 | 1)  # (1, 1, 1)
 
 
-def test__xor__type_error(test_seq: BinarySequence) -> None:
-    with pytest.raises(TypeError):
-        test_seq ^ 3  # type: ignore[operator]
+def test__xor__value_error(test_seq: BinarySequence) -> None:
+    with pytest.raises(ValueError):
+        test_seq ^ "565"  # type: ignore[operator]
 
 
-def test__and__type_error(test_seq: BinarySequence) -> None:
-    with pytest.raises(TypeError):
-        test_seq & "110"  # type: ignore[operator]
+def test__and__value_error(test_seq: BinarySequence) -> None:
+    with pytest.raises(ValueError):
+        test_seq & 4  # type: ignore[operator]
 
 
 def test__or__type_error(test_seq: BinarySequence) -> None:
     with pytest.raises(TypeError):
-        test_seq | "110"  # type: ignore[operator]
+        test_seq | "byb"  # type: ignore[operator]
 
 
 def test__xor__length_mismatch(test_seq: BinarySequence) -> None:
@@ -157,8 +151,20 @@ def test_as_bytes_exact_8_bits() -> None:
     assert s.as_bytes == b"\xf0"
 
 
-def test_hex_string(test_seq: BinarySequence) -> None:
-    assert test_seq.hex_string == "06"
+def test_as_int(test_seq: BinarySequence) -> None:
+    assert test_seq.as_int == 6
+
+
+def test_as_binary(test_seq: BinarySequence) -> None:
+    assert test_seq.as_binary == "0b110"
+
+
+def test_hex_string_no_prefix(test_seq: BinarySequence) -> None:
+    assert test_seq.as_hex() == "6"
+
+
+def test_hex_string_prefix(test_seq: BinarySequence) -> None:
+    assert test_seq.as_hex(True) == "0x6"
 
 
 def test_signed(test_seq: BinarySequence) -> None:
@@ -207,7 +213,7 @@ def test_to_length_truncate() -> None:
 
     assert seq.to_length(55).length == 55
     assert seq.to_length(300).length == 300
-    assert seq.to_length(1).hex_string == "01"
+    assert seq.to_length(1).as_hex(False) == "1"
 
 
 def test_shift_left(test_seq: BinarySequence) -> None:
@@ -305,11 +311,6 @@ def test_xor_success(test_seq: BinarySequence) -> None:
     assert test_seq.xor(other=other_seq).bits == (0, 0, 1)
 
 
-def test_xor_type_error(test_seq: BinarySequence) -> None:
-    with pytest.raises(TypeError):
-        test_seq.xor(other="110")  # type: ignore[arg-type]
-
-
 def test_bitwise_and(test_seq: BinarySequence) -> None:
     other = BinarySequence("101")
     assert test_seq.bitwise_and(other).bits == (1, 0, 0)
@@ -322,3 +323,9 @@ def test_bitwise_or(test_seq: BinarySequence) -> None:
 
 def test_hamming_distance(test_seq: BinarySequence) -> None:
     pass
+
+
+def test_simple_decimation_length_preserved() -> None:
+    seq = BinarySequence("0010111")
+    out = seq.simple_decimate(2)
+    assert len(out) == len(seq)

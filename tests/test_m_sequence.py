@@ -85,16 +85,20 @@ def test_max_sequence_length(test_seq_x3: MSequence) -> None:
 
 
 def test_generate_sequence_x3_x1_1(test_seq_x3: MSequence) -> None:
-    out = test_seq_x3.generate_sequence()
-    assert out.bit_string == "0010111"
+    assert test_seq_x3.bit_string == "0010111"
 
 
 def test_step_updates_register() -> None:
     seq = MSequence("x^3+x+1", "001")
     assert seq.current_register.bit_string == "001"
     assert seq.step() == 0
+    assert seq.running_output == (0,)
     assert seq.current_register.bit_string == "010"
     assert seq.step() == 0
+    assert seq.running_output == (
+        0,
+        0,
+    )
     assert seq.current_register.bit_string == "101"
 
 
@@ -110,7 +114,6 @@ def test_reset_sets_register_and_clears_output() -> None:
 
 def test_generate_sequence_returns_register_to_seed() -> None:
     seq = MSequence("x^3+x+1", "001")
-    seq.generate_sequence()
     assert seq.current_register.bits == seq.initial_fill.bits
 
 
@@ -130,8 +133,30 @@ def test_generate_k_bits_no_reset() -> None:
     assert seq.running_output == (0, 0, 1)
 
 
+def test_generate_k_bits_10(test_seq_x3: MSequence) -> None:
+    assert len(test_seq_x3.generate_k_bits(10)) == 10
+
+
 def test_balance_x3() -> None:
     seq = MSequence("x^3+x+1", "001")
-    out = seq.generate_sequence()
-    assert out.ones == 4
-    assert out.zeros == 3
+    assert seq.ones == 4
+    assert seq.zeros == 3
+
+
+def test_decimation_requires_coprime(test_seq_x3: MSequence) -> None:
+    with pytest.raises(ValueError):
+        test_seq_x3.decimate(7)
+
+
+def test_decimation(test_seq_x3: MSequence) -> None:
+    assert test_seq_x3.decimate(3).bits == (0, 0, 1, 0, 0, 0, 0)
+
+
+def test_canonical(test_seq_x3: MSequence) -> None:
+    assert test_seq_x3.canonical().initial_fill.bits == (1, 0, 0)
+
+
+def test_is_lag_of(test_seq_x3: MSequence) -> None:
+    b = test_seq_x3.shift(2)
+    assert test_seq_x3.lag_of(b)
+    assert 2 == test_seq_x3.lag_of(b)

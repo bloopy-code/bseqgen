@@ -7,7 +7,13 @@ from enum import StrEnum
 from itertools import groupby
 from typing import TYPE_CHECKING, Any, Literal, Self, TypeAlias
 
-from .utils import _correlate
+from .utils import (
+    BitsLike,
+    _correlate,
+    berlekamp_massey,
+    coeffs_to_poly_str,
+    validate_bits,
+)
 
 __all__ = ("Direction", "BinarySequence")
 
@@ -26,26 +32,17 @@ class Direction(StrEnum):
 
 
 class BinarySequence:
-    def __init__(self, bits: Sequence[int | str] | str) -> None:
+    def __init__(self, bits: Sequence[int | str] | str | int) -> None:
         self.bits: tuple[int, ...] = self._validate_bits(bits)
 
     @staticmethod
-    def _validate_bits(input_bits: Sequence[int | str] | str) -> tuple[int, ...]:
+    def _validate_bits(input_bits: Sequence[int | str] | str | int) -> tuple[int, ...]:
         """Validate input bit sequences."""
-        if (input_bits is None) or (not input_bits):
-            raise ValueError("Input bits cannot be None or empty.")
+        return validate_bits(input_bits)
 
-        try:
-            bits_list: tuple[int, ...] = tuple(int(bit) for bit in input_bits)
-        except (TypeError, ValueError) as e:
-            raise TypeError("Bits must be an iterable of 0 and 1 values.") from e
-
-        if any(bit not in (0, 1) for bit in bits_list):
-            raise ValueError("Bit sequence must only contain 0 or 1.")
-
-        return bits_list
-
-    def _compatible_bits(self, other: object, op: str) -> tuple[int, ...]:
+    def _compatible_bits(
+        self, other: BinarySequence | BitsLike, op: str
+    ) -> tuple[int, ...]:
         """Validate that other is a BinarySequence of the same length.
 
         Args:
@@ -56,7 +53,7 @@ class BinarySequence:
             tuple[int, ...]: Other sequences bits as tuple of ints.
         """
         if not isinstance(other, BinarySequence):
-            raise TypeError(f"{op} requires a BinarySequence.")
+            other = BinarySequence(other)
         if self.length != other.length:
             raise ValueError(f"{op} requires both sequences to be the same length.")
         return other.bits
@@ -86,47 +83,102 @@ class BinarySequence:
     def __invert__(self) -> BinarySequence:
         """Return bitwise inversion of this BinarySequence (~seq).
         Equivalent to: seq.inverted()
+
+        Examples:
+            >>> BinarySequence(101).inverted()
+            BinarySequence(length=3, preview='010')
+            >>> (~BinarySequence(101)).bits
+            (0, 1, 0)
         """
         return self.inverted()
 
-    def __xor__(self, other: object) -> BinarySequence:
+    def __xor__(self, other: BinarySequence | BitsLike) -> BinarySequence:
         """Bitwise XOR with another BinarySequence (seq ^ other).
         Equivalent to: seq.xor(other).
+
+        Args:
+            other (BinarySequence | BitsLike): Other Binary sequence,
+                or input to a possible BinarySequence.
+
+        Examples:
+            >>> BinarySequence(101).xor(111)
+            BinarySequence(length=3, preview='010')
+            >>> (BinarySequence(101) ^ 111).bits
+            (0, 1, 0)
         """
         if not isinstance(other, BinarySequence):
-            return NotImplemented
+            other = BinarySequence(other)
         return self.xor(other)
 
-    def __and__(self, other: object) -> BinarySequence:
+    def __and__(self, other: BinarySequence | BitsLike) -> BinarySequence:
         """Bitwise AND with another BinarySequence (seq & other).
         Equivalent to: seq.bitwise_and(other).
+
+        Args:
+            other (BinarySequence | BitsLike): Other Binary sequence,
+                or input to a possible BinarySequence.
+
+        Examples:
+            >>> BinarySequence(101).bitwise_and(111)
+            BinarySequence(length=3, preview='101')
+            >>> (BinarySequence(101) & 111).bits
+            (1, 0, 1)
         """
         if not isinstance(other, BinarySequence):
-            return NotImplemented
+            other = BinarySequence(other)
         return self.bitwise_and(other)
 
-    def __or__(self, other: object) -> BinarySequence:
+    def __or__(self, other: BinarySequence | BitsLike) -> BinarySequence:
         """Bitwise OR with another BinarySequence (seq | other).
         Equivalent to: seq.bitwise_or(other).
+
+        Args:
+            other (BinarySequence | BitsLike): Other Binary sequence,
+                or input to a possible BinarySequence.
+
+        Examples:
+            >>> BinarySequence(101).bitwise_and(111)
+            BinarySequence(length=3, preview='111')
+            >>> (BinarySequence(101) & 111).bits
+            (1, 1, 1)
         """
         if not isinstance(other, BinarySequence):
-            return NotImplemented
+            other = BinarySequence(other)
         return self.bitwise_or(other)
 
     @property
     def length(self) -> int:
-        """Number of bits in sequence."""
+        """Number of bits in sequence.
+
+        Example:
+            >>> a = BinarySequence("101")
+            >>> a.length
+            3
+
+        Returns:
+            int: length of bit sequence.
+        """
         return len(self.bits)
 
     @property
     def bit_string(self) -> str:
-        """Bit sequence as a string of '0's and '1's. No padding."""
+        """Bit sequence as a string of '0's and '1's. No padding.
+
+        Example:
+            >>> BinarySequence((1,0,1)).bit_string
+            "101"
+        """
         bit_str: str = "".join("1" if bit else "0" for bit in self.bits)
         return bit_str
 
     @property
     def as_bytes(self) -> bytes:
-        """Byte representation of bit sequence (left zero padded)"""
+        """Byte representation of bit sequence (left zero padded).
+
+        Example:
+            >>> BinarySequence("101").as_bytes
+            b'\x05'
+        """
         bit_str: str = self.bit_string
         zero_padding_len: int = (-len(bit_str)) % 8
         bit_str_padded: str = ("0" * zero_padding_len) + bit_str
@@ -137,35 +189,88 @@ class BinarySequence:
         return byte_conversion
 
     @property
-    def hex_string(self) -> str:
-        """Hex string representation of byte sequence"""
-        return self.as_bytes.hex()
+    def as_int(self) -> int:
+        """Return BinarySequence integer representation, from bytes.
+
+        Example:
+            >>> BinarySequence("101").as_int
+            5
+        """
+        return int.from_bytes(self.as_bytes, "big")
+
+    @property
+    def as_binary(self) -> str:
+        """Return binary (Python `bin` object) reoresentation of BinarySequence.
+
+        Example:
+            >>> BinarySequence("101").as_binary
+            '0b101'
+        """
+        return bin(self.as_int)
+
+    def as_hex(self, prefix: bool = False) -> str:
+        """Hex representation of BinarySequence.
+
+        Args:
+            prefix (bool, optional): If True, include the '0x' prefix
+                (like Python hex()). Defaults to False.
+
+        Example:
+            >>> BinarySequence("101").as_hex()
+            '5'
+            >>> BinarySequence("101").as_hex(True)
+            '0x5'
+        """
+        h = format(self.as_int, "x")
+        return ("0x" + h) if prefix else h
 
     @property
     def signed(self) -> tuple[int, ...]:
-        """Map bits (0, 1) to (-1, +1)."""
+        """Map bits (0, 1) to (-1, +1).
+
+        Example:
+            >>> BinarySequence(101).signed
+            (1, -1, 1)
+        """
         return tuple(1 if bit else -1 for bit in self.bits)
 
     @property
     def ones(self) -> int:
-        """Return number of 1's in Binary Sequence"""
+        """Return number of 1's in Binary Sequence
+
+        Examples:
+            >>> BinarySequence(101).ones
+            2
+        """
         return sum(self.bits)
 
     @property
     def zeros(self) -> int:
-        """Return number of 0's in Binary Sequence"""
+        """Return number of 0's in Binary Sequence
+
+        Examples:
+            >>> BinarySequence(101).zeros
+            1
+        """
         return self.length - self.ones
 
     @property
     def balance(self) -> float:
-        """Return % of 1's to 0's in Binary Sequence. (0-1)"""
+        """Return % of 1's to 0's in Binary Sequence. (0-1)
+
+        Examples:
+            >>> BinarySequence(101).balance
+            0.667
+        """
         return round(self.ones / self.length, 3)
 
     @property
     def run_lengths(self) -> list[tuple[int, int]]:
         """Return list of run lengths [(digit, run count)].
 
-        E.g. 111001 >> [(1, 3), (0, 2), (1, 1)]
+        Examples:
+            >>> BinarySequence(111001).run_lengths
+            [(1, 3), (0, 2), (1, 1)]
         """
         return [(bit, sum(1 for _ in group)) for bit, group in groupby(self.bits)]
 
@@ -178,6 +283,12 @@ class BinarySequence:
 
         Args:
             n (int): Length to convert sequence to.
+
+        Examples:
+            >>> BinarySequence(111001).to_length(3)
+            BinarySequence(length=3, preview='111')
+            >>> BinarySequence(111001).to_length(30)
+            BinarySequence(length=30, preview='111001111001111001111001111001')
         """
         if n <= 0:
             raise ValueError("Target length must be positive and not zero.")
@@ -196,6 +307,16 @@ class BinarySequence:
             n (int): How many bits to shift by.
             direction (Direction|Literal['left', 'right'], optional): 'left' or 'right'.
                 Defaults to Direction.LEFT.
+
+        Examples:
+            >>> BinarySequence(111001).shift(2)
+            BinarySequence(length=6, preview='100111')
+
+            >>> BinarySequence(111001).shift(-2)
+            BinarySequence(length=6, preview='011110')
+
+            >>> BinarySequence(111001).shift(2, 'right')
+            BinarySequence(length=6, preview='011110')
 
         Returns:
             BinarySequence: shifted BinarySequence.
@@ -269,6 +390,10 @@ class BinarySequence:
             dtype (NpDTypeInt | None, optional): Optional NumPy integer dtype to use.
                 Defaults to None (which then uses np.uint8)
 
+        Examples:
+            >>> BinarySequence(111001).to_numpy()
+            array([1, 1, 1, 0, 0, 1], dtype=uint8)
+
         Returns:
             NpNDArrayInt: 1D NumPy array of 0 and 1 values.
         """
@@ -290,6 +415,11 @@ class BinarySequence:
 
         Args:
             np_array (NpNDArrayInt): 1D NumPy Array of integers.
+
+        Examples:
+            >>> t = np.array([1,1,1])
+            >>> BinarySequence.from_numpy(t)
+            BinarySequence(length=3, preview='111')
 
         Returns:
             BinarySequence: Binary Sequence
@@ -319,7 +449,9 @@ class BinarySequence:
     def inverted(self) -> BinarySequence:
         """Return inverted BinarySequence.
 
-        E.g. 0 -> 1, 1 -> 0.
+        Examples:
+            >>> BinarySequence(1010).inverted()
+            BinarySequence(length=4, preview='0101')
         """
         return BinarySequence(tuple(1 - bit for bit in self.bits))
 
@@ -367,3 +499,31 @@ class BinarySequence:
 
     def hamming_distance(self) -> Any:
         raise NotImplementedError("Hamming distance coming soon")
+
+    def simple_decimate(self, d: int) -> BinarySequence:
+        """Return the periodic decimation of the sequence by factor d.
+
+        The output sequence y is defined as:
+            y[n] = x[(n*d) mod N]
+
+        The output always has the same length as the input.
+
+        Args:
+            d (int): _description_
+
+        Examples:
+
+
+        Returns:
+            BinarySequence: _description_
+        """
+        if d <= 0:
+            raise ValueError("Decimation factor must be positive.")
+
+        N = self.length
+        decimated_sequence = tuple(self.bits[(n * d) % N] for n in range(N))
+        return BinarySequence(decimated_sequence)
+
+    def find_poly(self) -> str:
+        connection_poly = berlekamp_massey(self.bit_string)
+        return coeffs_to_poly_str(connection_poly)
